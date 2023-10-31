@@ -32,7 +32,7 @@ DINO_PATCH_SIZE = (128, 32, 32)
 HD_DIR = "/sdf/home/s/sanketg/C036/20210811_mitochondria_for_joy/for_huntinton_paper"
 
 # Project root directory
-ROOT = "/sdf/home/s/sanketg/projects/cryo_vit"
+ROOT = "/sdf/home/s/sanketg/projects/CryoVIT"
 
 # Path to updated raw data - float 32 with proper distribution alignment
 RAW_TOMO_DIR = f"{ROOT}/data/tomograms/raw"

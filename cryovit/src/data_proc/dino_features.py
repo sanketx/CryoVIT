@@ -8,8 +8,10 @@ import torch
 from rich.progress import track
 from torch.utils.data import DataLoader
 
+
 from .. import config
-from ..datasets import VITDataset
+from cryovit.src.datasets import VITDataset
+
 
 torch.set_float32_matmul_precision("high")
 
