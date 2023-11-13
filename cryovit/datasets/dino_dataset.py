@@ -5,7 +5,8 @@ import numpy as np
 import pandas as pd
 import torch
 from rich.progress import track
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
+from torch.utils.data import Dataset
 
 from .. import config
 
@@ -18,8 +19,8 @@ class DinoDataset(Dataset):
         print(f"NUM RECORDS: {self.num_records}")
 
     def __len__(self):
-        if self.train:
-            return 4 * self.num_records
+        # if self.train:
+        #     return 4 * self.num_records
 
         return self.num_records
 
@@ -30,10 +31,19 @@ class DinoDataset(Dataset):
         record = self.records[idx % self.num_records].copy()
         record = self._load_tomogram(record)
 
-        # if self.train:
-        #     self._random_crop(record)
+        if self.train:
+            self._random_crop(record)
 
         return record
+
+    def _load_ai_label(self, record):
+        tomo_path = os.path.join(
+            config.AI_TOMO_DIR, record["sample"], record["tomo_name"]
+        )
+
+        with h5py.File(tomo_path) as fh:
+            mito = fh["pred"][()]
+            record["mito"] = np.where(mito > 0, 1, 0).astype(np.float32)
 
     def _load_tomogram(self, record):
         tomo_path = os.path.join(
@@ -42,15 +52,21 @@ class DinoDataset(Dataset):
 
         with h5py.File(tomo_path) as fh:
             record["data"] = fh["data"][()]
-            record["mito"] = fh["mito"][()].astype(np.float32)
             record["dino_features"] = fh["dino_features"][()]
+            record["mito"] = fh["mito"][()].astype(np.float32)
 
-        return {k: record[k] for k in ["data", "mito", "dino_features", "tomo_name"]}
+        # if self.train:
+        #     self._load_ai_label(record)
+
+        return {
+            k: record[k]
+            for k in ["data", "mito", "dino_features", "tomo_name", "sample"]
+        }
 
     def _random_crop(self, record):
-        side = np.random.choice([16, 24, 32])
+        # side = np.random.choice([16, 24, 32])
         d, h, w = record["dino_features"].shape[1:]
-        x, y, z = np.array([128, side, side])
+        x, y, z = np.array([min(d, 128), 32, 32])
 
         if (d, h, w) == (x, y, z):
             return  # nothing to be done
@@ -59,9 +75,9 @@ class DinoDataset(Dataset):
         delta_h = h - y + 1
         delta_w = w - z + 1
 
-        di = np.random.choice(delta_d)
-        hi = np.random.choice(delta_h)
-        wi = np.random.choice(delta_w)
+        di = np.random.choice(delta_d) if delta_d > 0 else 0
+        hi = np.random.choice(delta_h) if delta_h > 0 else 0
+        wi = np.random.choice(delta_w) if delta_w > 0 else 0
 
         record["dino_features"] = record["dino_features"][
             :, di : di + x, hi : hi + y, wi : wi + z
@@ -76,22 +92,20 @@ if __name__ == "__main__":
     split_file = os.path.join(config.EXP_DIR, "splits.csv")
 
     record_df = pd.read_csv(split_file)
-    record_df = record_df[record_df["sample"] == "BACHD"]
+    record_df = record_df[record_df["sample"] == "WT"]
 
     records = [row._asdict() for row in record_df.itertuples()]
     dataset = DinoDataset(records, train=True)
 
     dataloader_params = {
         "batch_size": None,
-        "pin_memory": True,
-        "num_workers": 8,
-        "prefetch_factor": 4,
+        "pin_memory": False,
+        "num_workers": 0,
+        # "prefetch_factor": 1,
         "persistent_workers": False,
     }
 
-    dataloader = DataLoader(dataset, **dataloader_params)
+    # dataloader = DataLoader(dataset, **dataloader_params)
 
-    for i, x in enumerate(track(dataloader)):
-        for key in x:
-            if key != "tomo_name":
-                print(i, key, x[key].shape)
+    for i, x in enumerate(track(dataset)):
+        print(i, x["data"].shape, x["dino_features"].shape)

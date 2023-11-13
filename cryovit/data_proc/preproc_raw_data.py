@@ -29,6 +29,12 @@ Notes:
    `rename bin4_normal.hdf bin4.hdf *`
    `rename bin4_normal_beautiful.hdf bin4.hdf *`
    `rename bin4_normal_beautifult.hdf bin4.hdf *`
+7. Remove the following from Q66_KD
+   20210225_HD_ipsc_Q66_CL143_tomo00012__bin4_filtered
+   20210225_HD_ipsc_Q66_CL143_tomo00016__bin4_filtered
+   20210225_HD_ipsc_Q66_CL143_tomo00026__bin4_filtered
+   20210225_HD_ipsc_Q66_CL143_tomo00034__bin4_filtered
+   20210225_HD_ipsc_Q66_CL143_tomo00040__bin4_filtered
 
 
 """
@@ -41,6 +47,7 @@ import torch
 from docopt import docopt
 
 from .. import config
+
 
 pooler = torch.nn.AvgPool3d(kernel_size=2, stride=2, ceil_mode=True)
 

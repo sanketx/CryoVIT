@@ -26,12 +26,24 @@ from tqdm import tqdm
 from .. import config
 
 
+def crop_tomo(data, tomo_name):
+    depth = {
+        "20211201_BACHD_control_RNA_tomo000012_redo1_bin4_filtered.hdf": 64,
+        "20211201_BACHD_control_RNA_tomo000014_redo1_bin4_filtered.hdf": 76,
+        "20211201_BACHD_control_RNA_tomo00001_redo1_bin4_filtered.hdf": 102,
+        "20211201_BACHD_control_RNA_tomo00024_bin4_filtered_rec.hdf": 67,
+        "20211201_BACHD_control_RNA_tomo00028_bin4_filtered.hdf": 179,
+    }
+    d = depth[tomo_name]
+    return data[d - 64 : d + 64]
+
+
 def insert_labels(label, idx, mito_labels, granule_labels):
     if label.shape != mito_labels[idx].shape:  # Q109 issue
-        raise RuntimeError("Fix the Q109 issue by rescaling")
-        # temp_label = np.zeros(mito_labels[idx].shape, dtype=label.dtype)
-        # temp_label[:label.shape[0], :label.shape[1]] = label
-        # label = temp_label
+        # raise RuntimeError("Fix the Q109 issue by rescaling")
+        temp_label = np.zeros(mito_labels[idx].shape, dtype=label.dtype)
+        temp_label[: label.shape[0], : label.shape[1]] = label
+        label = temp_label
 
     mito_label = np.where(label >= 253, 1, 0)
     mito_label = ndimage.binary_fill_holes(mito_label)
@@ -50,6 +62,9 @@ def generate_data(sample, tomo_name, slices, z_limits):
     with h5py.File(input_tomo_path) as fh:
         data = 127.5 * (fh["data"][()] + 1)
         data = data.astype(np.uint8)
+
+    if sample == "BACHD_controlRNA":  # these are too thick
+        data = crop_tomo(data, tomo_name)
 
     mito_labels = -1 * np.ones_like(data, dtype=np.int8)
     mito_labels[:z_min] = 0

@@ -28,7 +28,9 @@ class DinoModule(LightningModule):
         )
 
     def configure_optimizers(self):
-        return torch.optim.AdamW(self.parameters(), lr=self.lr, weight_decay=1e-3)
+        return torch.optim.AdamW(
+            self.trainer.model.parameters(), lr=self.lr, weight_decay=1e-3
+        )
 
     def on_before_optimizer_step(self, optimizer):
         norms = grad_norm(self, norm_type=2)
@@ -93,4 +95,5 @@ class DinoModule(LightningModule):
             "mito_pred": self(batch).float(),
             "mito_true": batch["mito"],
             "tomo_name": batch["tomo_name"],
+            "sample": batch["sample"],
         }

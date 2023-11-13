@@ -11,23 +11,21 @@ class MultiSampleDataModule(BaseDataModule):
 
     def train_df(self):
         return self.record_df[
-            (self.record_df[self.split_type] != self.split_id) &
-            (self.record_df["sample"].isin(self.train_samples))
+            (self.record_df[self.split_type] != self.split_id)
+            & (self.record_df["sample"].isin(self.train_samples))
         ]
 
     def val_df(self):
         return self.record_df[
-            (self.record_df[self.split_type] == self.split_id) &
-            (self.record_df["sample"].isin(self.train_samples))
+            (self.record_df[self.split_type] == self.split_id)
+            & (self.record_df["sample"].isin(self.train_samples))
         ]
 
     def test_df(self):
-        return self.record_df[
-            (self.record_df["sample"].isin(self.test_samples))
-        ]
+        return self.record_df[(self.record_df["sample"].isin(self.test_samples))]
 
     def predict_df(self):
         return self.record_df[
-            (self.record_df["sample"].isin(self.train_samples)) |
-            (self.record_df["sample"].isin(self.test_samples))
+            (self.record_df["sample"].isin(self.train_samples))
+            | (self.record_df["sample"].isin(self.test_samples))
         ]

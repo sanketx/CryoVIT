@@ -19,13 +19,18 @@ class BasicUpsample(DinoModule):
             SynthesisBlock(32, 16, 8, d1=2, d2=1),
         )
 
-        self.output_layer = nn.Conv3d(8, 1, 5, padding="same")
+        self.output_layer = nn.Sequential(
+            nn.Conv3d(8, 8, 3, padding="same"),
+            nn.GELU(),
+            nn.Conv3d(8, 1, 3, padding="same"),
+        )
 
     # @torch.compile()
     def forward(self, x):
         x = x["dino_features"].unsqueeze(0)
         x = self.layers(x)
         x = self.output_layer(x)
+        x = torch.clip(x, -5.0, 5.0)
         return x.squeeze()
 
 
@@ -55,7 +60,7 @@ if __name__ == "__main__":
     }
 
     x = {
-        f"dino_F{i}": torch.rand(1, 1536, 128, 37, 37, device="cuda")
+        f"dino_F{i}": torch.rand(1, 1536, 128, 32, 32, device="cuda")
         for i in [9, 19, 29, 39]
     }
     model = BasicUpsample(**model_params).cuda()

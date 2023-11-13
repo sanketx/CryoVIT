@@ -1,7 +1,7 @@
 data/*
 debug/*
 experiments/*
-
+ai_labels/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -15,7 +15,7 @@ DATASETS = [
     "Q66",
     "Q66_GRFS1",
     "Q66_KD",
-    "Q77",
+    # "Q77",
     "WT",
     "cancer",
 ]
@@ -54,3 +54,5 @@ DINO_DIR = "/sdf/home/s/sanketg/projects/foundation_models"
 
 # Path to DinoV2 training data
 DINO_TOMO_DIR = f"{ROOT}/data/tomograms/dino"
+# DINO_TOMO_DIR = "/tmp/sanketg/dino"
+AI_TOMO_DIR = f"{ROOT}/ai_labels"
