@@ -1,58 +1,50 @@
-import os
+from pathlib import Path
 
 import h5py
 import numpy as np
+import pandas as pd
 import torch
+import torch.nn.functional as F
+from numpy.typing import NDArray
 from torch.utils.data import Dataset
-from torchvision import transforms
+from torchvision.transforms import Normalize
 
-from .. import config
+
+IMAGENET_DEFAULT_MEAN = (0.485, 0.456, 0.406)
+IMAGENET_DEFAULT_STD = (0.229, 0.224, 0.225)
 
 
 class VITDataset(Dataset):
-    def __init__(self, records):
+    def __init__(self, records: pd.Series, root: Path) -> None:
         self.records = records
-        self.num_records = len(records)
+        self.root = root
+        self.transform = Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD)
 
-        IMAGENET_DEFAULT_MEAN = (0.485, 0.456, 0.406)
-        IMAGENET_DEFAULT_STD = (0.229, 0.224, 0.225)
+    def __len__(self) -> int:
+        return len(self.records)
 
-        self.transform = transforms.Normalize(
-            mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD
-        )
-
-    def __len__(self):
-        return self.num_records
-
-    def __getitem__(self, idx):
+    def __getitem__(self, idx) -> torch.Tensor:
         if idx >= len(self):
             raise IndexError
 
-        record = self.records[idx].copy()
-        self._load_tomogram(record)
-        self._transform(record)
+        record = self.records[idx]
+        data = self._load_tomogram(record)
+        return self._transform(data)
 
-        return record
-
-    def _load_tomogram(self, record):
-        tomo_path = os.path.join(
-            config.TRAIN_TOMO_DIR, record["sample"], record["tomo_name"]
-        )
+    def _load_tomogram(self, record: str) -> NDArray[np.uint8]:
+        tomo_path = self.root / record
 
         with h5py.File(tomo_path) as fh:
-            record["data"] = fh["data"][()]
-            record["mito"] = fh["mito"][()]
-            record["granule"] = fh["granule"][()]
+            return fh["data"][()]
 
-    def _transform(self, record):
+    def _transform(self, data: NDArray[np.uint8]) -> torch.Tensor:
         scale = (14 / 16, 14 / 16)
-        _, h, w = record["data"].shape
+        _, h, w = data.shape
         assert h % 16 == 0 and w % 16 == 0, f"Invalid height: {h} or width: {w}"
 
-        data = np.expand_dims(record["data"], axis=1)
+        data = np.expand_dims(data, axis=1)
         data = np.repeat(data, 3, axis=1)
-        data = torch.from_numpy(data).float()
 
+        data = torch.from_numpy(data).float()
         data = self.transform(data / 255.0)
-        data = torch.nn.functional.interpolate(data, scale_factor=scale, mode="bicubic")
-        record["input"] = data
+        return F.interpolate(data, scale_factor=scale, mode="bicubic")
