@@ -1,8 +1,9 @@
-"""
-Global config file for cryo_vit project
-"""
+"""Config file for CryoVIT experiments."""
 
-DATASETS = [
+from enum import Enum
+
+
+samples = [
     "BACHD",
     "BACHD_controlRNA",
     "BACHD_pias1",
@@ -15,15 +16,11 @@ DATASETS = [
     "Q66",
     "Q66_GRFS1",
     "Q66_KD",
-    # "Q77",
     "WT",
     "cancer",
 ]
 
-TRAIN_DATASETS = []
-
-TEST_DATASETS = []
-
+Sample = Enum("Sample", samples)
 
 UNET_PATCH_SIZE = (128, 512, 512)  # size of patch fed into the model
 DINO_PATCH_SIZE = (128, 32, 32)
