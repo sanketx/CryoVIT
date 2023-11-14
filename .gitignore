@@ -3,6 +3,8 @@ debug/*
 experiments/*
 cryovit_dataset/*
 
+.vscode
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
