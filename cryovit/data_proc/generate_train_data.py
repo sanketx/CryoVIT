@@ -57,6 +57,7 @@ def insert_labels(label, idx, mito_labels, granule_labels):
 def generate_data(sample, tomo_name, slices, z_limits):
     input_tomo_path = os.path.join(config.RAW_TOMO_DIR, sample, tomo_name)
     output_tomo_path = os.path.join(config.TRAIN_TOMO_DIR, sample, tomo_name)
+    ai_tomo_path = os.path.join(config.AI_TOMO_DIR, sample, tomo_name)
     z_min, z_max = z_limits
 
     with h5py.File(input_tomo_path) as fh:
@@ -71,8 +72,15 @@ def generate_data(sample, tomo_name, slices, z_limits):
     mito_labels[z_max:] = 0
 
     granule_labels = -1 * np.ones_like(data, dtype=np.int8)
-    granule_labels[:z_min] = 0
-    granule_labels[z_max:] = 0
+    # granule_labels[:z_min] = 0
+    # granule_labels[z_max:] = 0
+
+    with h5py.File(ai_tomo_path) as fh:
+        mito_ai_labels = fh["pred"][()]
+        mito_ai_labels = np.where(mito_ai_labels > 0.0, 1, 0)
+        mito_ai_labels = mito_ai_labels.astype(np.uint8)
+        mito_ai_labels[:z_min] = 0
+        mito_ai_labels[z_max:] = 0
 
     for idx in slices:
         in_path = os.path.join(
@@ -84,6 +92,7 @@ def generate_data(sample, tomo_name, slices, z_limits):
     with h5py.File(output_tomo_path, "w") as fh:
         fh.create_dataset("data", data=data, compression="gzip")
         fh.create_dataset("mito", data=mito_labels, compression="gzip")
+        fh.create_dataset("mito_ai", data=mito_ai_labels, compression="gzip")
         fh.create_dataset("granule", data=granule_labels, compression="gzip")
 
 
