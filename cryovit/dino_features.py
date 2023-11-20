@@ -3,38 +3,25 @@
 import logging
 import sys
 import warnings
-from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 import hydra
-from hydra.core.config_store import ConfigStore
 from omegaconf import OmegaConf
 
-from cryovit.config import Sample
-from cryovit.data_proc import dino_features
+from cryovit.config import DinoFeatureConfig
+from cryovit.run import dino_features
 
 
-@dataclass
-class DinoConfig:
-    dino_dir: Path
-    data_dir: Path
-    feature_dir: Path
-    batch_size: int
-    sample: Sample
-
-
-cs = ConfigStore.instance()
-cs.store(name="base_config", node=DinoConfig)
 warnings.simplefilter("ignore")
 
 
-def validate_config(cfg: DinoConfig) -> None:
+def validate_config(cfg: DinoFeatureConfig) -> None:
     missing_keys = OmegaConf.missing_keys(cfg)
     error_msg = ["The following parameters were missing from dino_features.yaml"]
 
     for i, key in enumerate(missing_keys, 1):
-        error_str = f"{i}. {key}: {DinoConfig.__annotations__.get(key, Any).__name__}"
+        param_dict = DinoFeatureConfig.__annotations__
+        error_str = f"{i}. {key}: {param_dict.get(key, Any).__name__}"
         error_msg.append(error_str)
 
     if missing_keys:
@@ -47,7 +34,7 @@ def validate_config(cfg: DinoConfig) -> None:
     config_name="dino_features.yaml",
     version_base="1.2",
 )
-def main(cfg: DinoConfig) -> None:
+def main(cfg: DinoFeatureConfig) -> None:
     validate_config(cfg)
 
     try:

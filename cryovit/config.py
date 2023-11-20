@@ -1,6 +1,10 @@
 """Config file for CryoVIT experiments."""
 
+from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
+
+from hydra.core.config_store import ConfigStore
 
 
 samples = [
@@ -21,6 +25,19 @@ samples = [
 ]
 
 Sample = Enum("Sample", samples)
+
+
+@dataclass
+class DinoFeatureConfig:
+    dino_dir: Path
+    data_dir: Path
+    feature_dir: Path
+    batch_size: int
+    sample: Sample
+
+
+cs = ConfigStore.instance()
+cs.store(name="base_config", node=DinoFeatureConfig)
 
 UNET_PATCH_SIZE = (128, 512, 512)  # size of patch fed into the model
 DINO_PATCH_SIZE = (128, 32, 32)
