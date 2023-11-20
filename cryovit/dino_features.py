@@ -8,19 +8,19 @@ from typing import Any
 import hydra
 from omegaconf import OmegaConf
 
-from cryovit.config import DinoFeatureConfig
+from cryovit.config import DinoFeaturesConfig
 from cryovit.run import dino_features
 
 
 warnings.simplefilter("ignore")
 
 
-def validate_config(cfg: DinoFeatureConfig) -> None:
+def validate_config(cfg: DinoFeaturesConfig) -> None:
     missing_keys = OmegaConf.missing_keys(cfg)
     error_msg = ["The following parameters were missing from dino_features.yaml"]
 
     for i, key in enumerate(missing_keys, 1):
-        param_dict = DinoFeatureConfig.__annotations__
+        param_dict = DinoFeaturesConfig.__annotations__
         error_str = f"{i}. {key}: {param_dict.get(key, Any).__name__}"
         error_msg.append(error_str)
 
@@ -34,7 +34,7 @@ def validate_config(cfg: DinoFeatureConfig) -> None:
     config_name="dino_features.yaml",
     version_base="1.2",
 )
-def main(cfg: DinoFeatureConfig) -> None:
+def main(cfg: DinoFeaturesConfig) -> None:
     validate_config(cfg)
 
     try:
