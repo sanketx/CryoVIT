@@ -28,7 +28,7 @@ Sample = Enum("Sample", samples)
 
 
 @dataclass
-class DinoFeatureConfig:
+class DinoFeaturesConfig:
     dino_dir: Path
     data_dir: Path
     feature_dir: Path
@@ -37,7 +37,7 @@ class DinoFeatureConfig:
 
 
 cs = ConfigStore.instance()
-cs.store(name="base_config", node=DinoFeatureConfig)
+cs.store(name="dino_features_config", node=DinoFeaturesConfig)
 
 UNET_PATCH_SIZE = (128, 512, 512)  # size of patch fed into the model
 DINO_PATCH_SIZE = (128, 32, 32)
