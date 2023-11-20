@@ -82,7 +82,7 @@ def process_sample(
 
     for i, x in track(
         enumerate(dataloader),
-        description="[green]Computing features",
+        description=f"[green]Computing features for {sample.name}",
         total=len(dataloader),
     ):
         features = dino_features(x, model, batch_size)
