@@ -11,7 +11,7 @@ data_dir: ${cryovit_root}/cryovit_dataset
 feature_dir: ${data_dir}/dino_features
 
 # Batch size: number of slices in one batch
-batch_size: 128
+# batch_size: 128
 
 # Sample to vectorize using DINOv2
 sample: ???
@@ -37,7 +37,7 @@ sample_list:
 
 defaults:
   - _self_
-  - base_config
+  - dino_features_config
   - override hydra/hydra_logging: rich_logger
   - override hydra/job_logging: rich_logger
 
