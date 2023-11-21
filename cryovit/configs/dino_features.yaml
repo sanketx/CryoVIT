@@ -11,33 +11,16 @@ data_dir: ${cryovit_root}/cryovit_dataset
 feature_dir: ${data_dir}/dino_features
 
 # Batch size: number of slices in one batch
-# batch_size: 128
+batch_size: 128
 
 # Sample to vectorize using DINOv2
 sample: ???
 
-# Optional: A list of samples to vectorize
-sample_list:
-  BACHD,
-  BACHD_controlRNA,
-  BACHD_pias1,
-  dN17_BACHD,
-  Q109,
-  Q18,
-  Q20,
-  Q53,
-  Q53_KD,
-  Q66,
-  Q66_GRFS1,
-  Q66_KD,
-  WT,
-  cancer
-
 #################### Do not modify #####################
 
 defaults:
-  - _self_
   - dino_features_config
+  - _self_
   - override hydra/hydra_logging: rich_logger
   - override hydra/job_logging: rich_logger
 
@@ -45,6 +28,6 @@ hydra:
   mode: MULTIRUN
   sweeper:
     params:
-      sample: ${sample_list}
+      sample: ${all_samples}
   sweep:
     dir: /tmp/${oc.env:USER}/multirun

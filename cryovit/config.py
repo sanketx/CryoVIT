@@ -1,10 +1,15 @@
 """Config file for CryoVIT experiments."""
 
 from dataclasses import dataclass
+from dataclasses import field
 from enum import Enum
 from pathlib import Path
+from typing import Any
+from typing import List
+from typing import Optional
 
 from hydra.core.config_store import ConfigStore
+from omegaconf import MISSING
 
 
 samples = [
@@ -34,10 +39,53 @@ class DinoFeaturesConfig:
     feature_dir: Path
     batch_size: int
     sample: Sample
+    all_samples: str = ",".join(samples)
+    cryovit_root: Optional[Path] = None
+
+
+@dataclass
+class Dataset:
+    _target_: str = MISSING
+    _partial_: bool = True
+
+
+@dataclass
+class DataLoader:
+    num_workers: int = MISSING
+    prefetch_factor: int = MISSING
+    persistent_workers: bool = False
+    pin_memory: bool = True
+    batch_size: Optional[int] = None
+    _target_: str = "torch.utils.data.DataLoader"
+    _partial_: bool = True
+
+
+@dataclass
+class BaseModel:
+    lr: float
+    weight_decay: float
+    losses: List[Any]
+    metrics: List[Any]
+
+
+@dataclass
+class CryoVIT(BaseModel):
+    _target_: str = "cryovit.models.CryoVIT"
+
+
+@dataclass
+class TrainModelConfig:
+    model: BaseModel
+    dataset: Dataset = field(default_factory=Dataset)
+    dataloader: DataLoader = field(default_factory=DataLoader)
 
 
 cs = ConfigStore.instance()
 cs.store(name="dino_features_config", node=DinoFeaturesConfig)
+
+cs.store(group="model", name="cryovit", node=CryoVIT)
+cs.store(name="train_model_config", node=TrainModelConfig)
+
 
 UNET_PATCH_SIZE = (128, 512, 512)  # size of patch fed into the model
 DINO_PATCH_SIZE = (128, 32, 32)
