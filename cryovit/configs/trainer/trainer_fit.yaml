@@ -1,0 +1,8 @@
+callbacks:
+- _target_: pytorch_lightning.callbacks.RichProgressBar
+
+logger:
+- _target_: pytorch_lightning.loggers.wandb.WandbLogger
+  project: cryovit
+  save_dir: ${experiment.exp_dir}/${experiment.exp_name}
+      

@@ -1,15 +1,13 @@
 """Config file for CryoVIT experiments."""
-
 from dataclasses import dataclass
-from dataclasses import field
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Tuple
 
 from hydra.core.config_store import ConfigStore
-from omegaconf import MISSING
 
 
 samples = [
@@ -44,28 +42,26 @@ class DinoFeaturesConfig:
 
 
 @dataclass
-class Dataset:
-    _target_: str = MISSING
-    _partial_: bool = True
+class Experiment:
+    exp_name: str
+    label_key: str
+    samples: List[Sample]
+    split_id: int
 
-
-@dataclass
-class DataLoader:
-    num_workers: int = MISSING
-    prefetch_factor: int = MISSING
-    persistent_workers: bool = False
-    pin_memory: bool = True
-    batch_size: Optional[int] = None
-    _target_: str = "torch.utils.data.DataLoader"
-    _partial_: bool = True
+    exp_dir: Path
+    tomo_dir: Path
+    split_file: Path
+    cryovit_root: Optional[Path] = None
 
 
 @dataclass
 class BaseModel:
     lr: float
-    weight_decay: float
-    losses: List[Any]
-    metrics: List[Any]
+    weight_decay: float = 1e-3
+    losses: Tuple[Dict] = (dict(_target_="cryovit.models.losses.DiceLoss"),)
+    metrics: Tuple[Dict] = (
+        dict(_target_="cryovit.models.metrics.DiceMetric", threshold=0.5),
+    )
 
 
 @dataclass
@@ -74,16 +70,49 @@ class CryoVIT(BaseModel):
 
 
 @dataclass
+class DataLoader:
+    num_workers: int
+    prefetch_factor: int
+    persistent_workers: bool = False
+    pin_memory: bool = True
+    batch_size: Optional[int] = None
+    _target_: str = "torch.utils.data.DataLoader"
+    _partial_: bool = True
+
+
+@dataclass
+class Trainer:
+    accelerator: str = "gpu"
+    devices: str = 1
+    precision: str = "16-mixed"
+    _target_: str = "pytorch_lightning.Trainer"
+
+
+@dataclass
+class TrainerFit(Trainer):
+    logger: Optional[List] = None
+    callbacks: Optional[List] = None
+
+    max_epochs: int = 50
+    accumulate_grad_batches: int = 4
+
+    log_every_n_steps: int = 1
+    num_sanity_val_steps: int = 0
+
+
+@dataclass
 class TrainModelConfig:
     model: BaseModel
-    dataset: Dataset = field(default_factory=Dataset)
-    dataloader: DataLoader = field(default_factory=DataLoader)
+    trainer: Trainer
+    dataloader: DataLoader
+    experiment: Experiment
 
 
 cs = ConfigStore.instance()
 cs.store(name="dino_features_config", node=DinoFeaturesConfig)
 
 cs.store(group="model", name="cryovit", node=CryoVIT)
+cs.store(group="trainer", name="trainer_fit", node=TrainerFit)
 cs.store(name="train_model_config", node=TrainModelConfig)
 
 

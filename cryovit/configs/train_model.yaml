@@ -1,0 +1,37 @@
+experiment:
+  exp_name: test_exp
+  label_key: mito
+  samples:
+  - WT
+
+  cryovit_root: /sdf/home/s/sanketg/projects/CryoVIT
+  exp_dir: ${.cryovit_root}/experiments
+  tomo_dir: ${.cryovit_root}/cryovit_dataset/dino_features
+  split_file: ${.cryovit_root}/cryovit_dataset/csv/splits.csv
+
+################## Training parameters #################
+
+model:
+  lr: 1e-4
+
+dataloader:
+  num_workers: 8
+  prefetch_factor: 1
+
+#################### Do not modify #####################
+
+defaults:
+  - model: ???
+  - trainer: trainer_fit
+  - train_model_config
+  - _self_
+  - override hydra/hydra_logging: rich_logger
+  - override hydra/job_logging: rich_logger
+
+hydra:
+  mode: MULTIRUN
+  # sweeper:
+  #   params:
+  sweep:
+    dir: /tmp/${oc.env:USER}/multirun
+

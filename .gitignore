@@ -2,6 +2,7 @@ data/*
 debug/*
 experiments/*
 cryovit_dataset/*
+wandb/
 
 .vscode
 

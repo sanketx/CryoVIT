@@ -3,6 +3,8 @@ from torchmetrics import Metric
 
 
 class DiceMetric(Metric):
+    higher_is_better = True
+
     def __init__(self, threshold):
         super().__init__()
         self.thresh = threshold
