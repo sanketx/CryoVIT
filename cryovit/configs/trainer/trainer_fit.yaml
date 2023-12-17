@@ -1,8 +1,17 @@
+max_epochs: 50
+
 callbacks:
 - _target_: pytorch_lightning.callbacks.RichProgressBar
+- _target_: pytorch_lightning.callbacks.StochasticWeightAveraging
+  swa_lrs: ${model.lr}
+  swa_epoch_start: 0.8
+  annealing_epochs: 0
 
 logger:
 - _target_: pytorch_lightning.loggers.wandb.WandbLogger
+  _convert_: all
   project: cryovit
-  save_dir: ${experiment.exp_dir}/${experiment.exp_name}
-      
+  group: ${exp_name}
+  save_dir: ${exp_paths.exp_dir}
+  # mode: "disabled"
+  config: {}

@@ -1,4 +1,4 @@
-"""Script to train segmentation models for CryoET data."""
+"""Script to evaluate segmentation models for CryoET data."""
 
 import logging
 import sys
@@ -8,16 +8,16 @@ from typing import Any
 import hydra
 from omegaconf import OmegaConf
 
-from cryovit.config import TrainModelConfig
-from cryovit.run import train_model
+from cryovit.config import EvalModelConfig
+from cryovit.run import eval_model
 
 
 warnings.simplefilter("ignore")
 
 
-def validate_config(cfg: TrainModelConfig) -> None:
+def validate_config(cfg: EvalModelConfig) -> None:
     missing_keys = OmegaConf.missing_keys(cfg)
-    error_msg = ["The following parameters were missing from train_model.yaml"]
+    error_msg = ["The following parameters were missing from eval_model.yaml"]
 
     for i, key in enumerate(missing_keys, 1):
         error_msg.append(f"{i}. {key}")
@@ -26,19 +26,17 @@ def validate_config(cfg: TrainModelConfig) -> None:
         logging.error("\n".join(error_msg))
         sys.exit(1)
 
-    OmegaConf.set_struct(cfg, False)
-
 
 @hydra.main(
     config_path="configs",
-    config_name="train_model.yaml",
+    config_name="eval_model.yaml",
     version_base="1.2",
 )
-def main(cfg: TrainModelConfig) -> None:
+def main(cfg: EvalModelConfig) -> None:
     validate_config(cfg)
 
     try:
-        train_model.run_trainer(cfg)
+        eval_model.run_trainer(cfg)
     except BaseException as err:
         logging.error(f"{type(err).__name__}: {err}")
 

@@ -23,7 +23,7 @@ class CryoVIT(BaseModel):
             nn.Conv3d(8, 1, 3, padding="same"),
         )
 
-    @torch.compile()
+    # @torch.compile()
     def forward(self, x):
         x = x.unsqueeze(0)
         x = self.layers(x)

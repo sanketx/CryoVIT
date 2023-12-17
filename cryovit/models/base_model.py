@@ -34,19 +34,11 @@ class BaseModel(LightningModule):
         )
 
     def configure_optimizers(self):
-        optimizer = torch.optim.AdamW(
+        return torch.optim.AdamW(
             self.parameters(),
             lr=self.lr,
             weight_decay=self.weight_decay,
         )
-
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer,
-            T_max=self.trainer.max_epochs,
-            eta_min=self.lr * 3e-2,
-        )
-
-        return [optimizer], [{"scheduler": scheduler, "interval": "epoch"}]
 
     def on_before_optimizer_step(self, optimizer):
         norms = grad_norm(self, norm_type=2)
@@ -56,13 +48,13 @@ class BaseModel(LightningModule):
         data = batch["input"]
         y_true = batch["label"]
 
-        y_pred = self(data)
+        y_pred_full = self(data)
         mask = (y_true > -1.0).detach()
 
-        y_pred = torch.masked_select(y_pred, mask).view(-1, 1)
+        y_pred = torch.masked_select(y_pred_full, mask).view(-1, 1)
         y_true = torch.masked_select(y_true, mask).view(-1, 1)
 
-        return y_pred, y_true
+        return y_pred, y_true, y_pred_full
 
     def _log_stats(self, losses, prefix):
         def log_stat(name, value, on_epoch, on_step):
@@ -86,7 +78,7 @@ class BaseModel(LightningModule):
             log_stat(type(metric_fn).__name__, metric_fn, True, False)
 
     def step(self, batch, prefix):
-        y_pred, y_true = self._masked_predict(batch)
+        y_pred, y_true, _ = self._masked_predict(batch)
 
         loss_fns = self.loss_fns[prefix]  # train, val, or test
         losses = [fn(y_pred, y_true) for fn in loss_fns]
@@ -104,4 +96,28 @@ class BaseModel(LightningModule):
         return self.step(batch, "VAL")
 
     def test_step(self, batch, batch_idx):
-        return self.step(batch, "TEST")
+        y_pred, y_true, y_pred_full = self._masked_predict(batch)
+        y_pred_full = (
+            255
+            * (y_pred_full - y_pred_full.min())
+            / (y_pred_full.max() - y_pred_full.min())
+        ).to(torch.uint8)
+
+        results = {
+            "sample": batch["sample"],
+            "tomo_name": batch["tomo_name"],
+            "data": batch["data"].cpu().numpy(),
+            "label": batch["label"].cpu().numpy(),
+            "preds": y_pred_full.cpu().numpy(),
+        }
+
+        for loss_fn in self.loss_fns["TEST"]:
+            loss = loss_fn(y_pred, y_true)
+            results[f"TEST_{type(loss_fn).__name__}"] = loss.item()
+
+        for metric_fn in self.metric_fns["TEST"]:
+            score = metric_fn(y_pred, y_true)
+            results[f"TEST_{type(metric_fn).__name__}"] = score.item()
+            metric_fn.reset()
+
+        return results

@@ -5,23 +5,24 @@ from cryovit.config import Sample
 from cryovit.data_modules.base_datamodule import BaseDataModule
 
 
-class MultiSampleDataModule(BaseDataModule):
+class LOOSampleDataModule(BaseDataModule):
     def __init__(
         self,
-        sample: List[Sample],
+        sample: Sample,
         split_id: Optional[int],
-        test_samples: List[Sample],
+        all_samples: List[Sample],
         **kwargs,
     ):
-        super(MultiSampleDataModule, self).__init__(**kwargs)
-        self.sample = [s.name for s in sample]
-        self.test_samples = [s.name for s in test_samples]
+        super(LOOSampleDataModule, self).__init__(**kwargs)
+        self.sample = sample.name
+        self.all_samples = [s.name for s in all_samples]
         self.split_id = split_id
 
     def train_df(self):
         return self.record_df[
             (self.record_df["split_id"] != self.split_id)
-            & (self.record_df["sample"].isin(self.sample))
+            & (self.record_df["sample"] != self.sample)
+            & (self.record_df["sample"].isin(self.all_samples))
         ]
 
     def val_df(self):
@@ -30,9 +31,9 @@ class MultiSampleDataModule(BaseDataModule):
 
         return self.record_df[
             (self.record_df["split_id"] == self.split_id)
-            & (self.record_df["sample"].isin(self.sample))
+            & (self.record_df["sample"] != self.sample)
+            & (self.record_df["sample"].isin(self.all_samples))
         ]
 
     def test_df(self):
-        test_samples = self.test_samples if self.test_samples else self.sample
-        return self.record_df[(self.record_df["sample"].isin(test_samples))]
+        return self.record_df[self.record_df["sample"] == self.sample]
