@@ -97,8 +97,5 @@ def run_trainer(cfg: TrainModelConfig):
     model = instantiate(cfg.model)
 
     trainer.fit(model, datamodule)
-    trainer.validate(model, datamodule)
-    trainer.test(model, datamodule)
-
     torch.save(model.state_dict(), (exp_paths.exp_dir / "weights.pt"))
     wandb.finish()
