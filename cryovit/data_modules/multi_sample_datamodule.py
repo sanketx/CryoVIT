@@ -15,7 +15,8 @@ class MultiSampleDataModule(BaseDataModule):
     ):
         super(MultiSampleDataModule, self).__init__(**kwargs)
         self.sample = [s.name for s in sample]
-        self.test_samples = [s.name for s in test_samples]
+        test_samples = [s.name for s in test_samples]
+        self.test_samples = test_samples = test_samples if test_samples else self.sample
         self.split_id = split_id
 
     def train_df(self):
@@ -34,5 +35,4 @@ class MultiSampleDataModule(BaseDataModule):
         ]
 
     def test_df(self):
-        test_samples = self.test_samples if self.test_samples else self.sample
-        return self.record_df[(self.record_df["sample"].isin(test_samples))]
+        return self.record_df[(self.record_df["sample"].isin(self.test_samples))]
