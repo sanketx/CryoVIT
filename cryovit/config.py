@@ -13,18 +13,18 @@ from omegaconf import MISSING
 
 
 samples = [
-    "BACHD",  # keep
-    "dN17_BACHD",  # keep
-    "Q109",  # keep
-    "Q18",  # keep
-    "Q20",  # keep
-    "Q53",  # keep
-    "Q53_KD",  # keep
-    "Q66",  # keep
-    "Q66_GRFS1",  # keep
-    "Q66_KD",  # keep
-    "WT",  # keep
-    "cancer",  # keep
+    "BACHD",
+    "dN17_BACHD",
+    "Q109",
+    "Q18",
+    "Q20",
+    "Q53",
+    "Q53_KD",
+    "Q66",
+    "Q66_GRFS1",
+    "Q66_KD",
+    "WT",
+    "cancer",
 ]
 
 Sample = Enum("Sample", samples)
@@ -150,17 +150,17 @@ class TrainModelConfig:
     dataloader: DataLoader = field(default=DataLoader())
 
 
-# @dataclass
-# class EvalModelConfig:
-#     exp_name: str = MISSING
-#     label_key: str = MISSING
-#     split_id: Optional[int] = None
-#     samples: Tuple[Sample] = MISSING
+@dataclass
+class EvalModelConfig:
+    exp_name: str = MISSING
+    label_key: str = MISSING
+    aux_keys: Tuple[str] = ("data",)
 
-#     exp_paths: ExpPaths = MISSING
-#     model: Model = MISSING
-#     trainer: TrainerEval = MISSING
-#     dataloader: DataLoader = field(default=DataLoader())
+    model: Model = MISSING
+    trainer: TrainerEval = MISSING
+    dataset: Dataset = MISSING
+    exp_paths: ExpPaths = MISSING
+    dataloader: DataLoader = field(default=DataLoader())
 
 
 cs = ConfigStore.instance()
@@ -176,4 +176,4 @@ cs.store(group="dataset", name="loo", node=LOOSample)
 cs.store(group="dataset", name="fractional", node=FractionalLOO)
 
 cs.store(name="train_model_config", node=TrainModelConfig)
-# cs.store(name="eval_model_config", node=EvalModelConfig)
+cs.store(name="eval_model_config", node=EvalModelConfig)
