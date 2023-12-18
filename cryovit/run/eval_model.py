@@ -8,6 +8,7 @@ from typing import Optional
 import h5py
 import pandas as pd
 import torch
+from hydra.core.hydra_config import HydraConfig
 from hydra.utils import instantiate
 from pytorch_lightning import Callback
 from pytorch_lightning import LightningDataModule
@@ -30,7 +31,7 @@ logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
 
 class TestPredictionWriter(Callback):
     def __init__(self, results_dir: Path) -> None:
-        self.results_dir = results_dir / "results"
+        self.results_dir = results_dir
         self.scores = defaultdict(list)
 
     def _save_prediction(self, outputs):
@@ -62,62 +63,70 @@ class TestPredictionWriter(Callback):
 
 
 def validate_paths(exp_paths: ExpPaths, cfg: EvalModelConfig):
-    exp_paths.exp_dir /= cfg.exp_name
-    split_ids = [cfg.split_id] if cfg.split_id is not None else range(10)
+    dataset_type = HydraConfig.get().runtime.choices.dataset
+
+    match dataset_type:
+        case "single" | "loo" | "fractional":
+            exp_paths.exp_dir /= cfg.dataset.sample.name
+
+        case "multi":
+            samples = sorted([s.name for s in cfg.dataset.sample])
+            exp_paths.exp_dir /= "_".join(samples)
+
+    match dataset_type:
+        case "multi" | "loo" | "fractional":
+            split_ids = [cfg.dataset.split_id]
+
+        case "single":
+            split_ids = range(10)
 
     for split_id in split_ids:
-        exp_dir = exp_paths.exp_dir / f"split_{split_id}"
-        ckpt_path = exp_dir / "weights.pt"
+        split_dir = "" if split_id is None else f"split_{split_id}"
+        ckpt_dir = exp_paths.exp_dir / split_dir
+        ckpt_path = ckpt_dir / "weights.pt"
 
-        if not exp_dir.exists():
-            raise ValueError(f"The directory {exp_dir} does not exist")
+        if not ckpt_dir.exists():
+            raise ValueError(f"The directory {ckpt_dir} does not exist")
 
         if not ckpt_path.exists():
-            raise ValueError(f"{ckpt_path.parent} does not contain a checkpoint")
+            raise ValueError(f"{ckpt_dir} does not contain a checkpoint")
 
 
-def build_datamodule(
-    cfg: EvalModelConfig, split_id: Optional[int]
-) -> LightningDataModule:
-    samples = [s.name for s in cfg.samples]
-    split_file = cfg.exp_paths.split_file
-    dataloader_fn = instantiate(cfg.dataloader)
+def build_datamodule(cfg: EvalModelConfig) -> LightningDataModule:
+    model_type = HydraConfig.get().runtime.choices.model
 
-    if cfg.model._target_ == "cryovit.models.CryoVIT":
-        input_key = "dino_features"
-    else:
-        input_key = "data"
+    match model_type:
+        case "cryovit":
+            input_key = "dino_features"
+        case _:
+            input_key = "data"
 
     dataset_params = {
         "input_key": input_key,
         "label_key": cfg.label_key,
         "data_root": cfg.exp_paths.tomo_dir,
-        "aux_keys": ["data"],
+        "aux_keys": cfg.aux_keys,
     }
 
-    return MultiSampleDataModule(
-        samples,
-        split_id,
-        split_file=split_file,
-        dataloader_fn=dataloader_fn,
+    return instantiate(cfg.dataset)(
+        split_file=cfg.exp_paths.split_file,
+        dataloader_fn=instantiate(cfg.dataloader),
         dataset_params=dataset_params,
     )
 
 
 def get_scores(
     model: BaseModel,
-    model_split_id: int,
-    target_split_id: Optional[int],
-    exp_paths: ExpPaths,
+    ckpt_dir: Path,
+    result_dir: Path,
     cfg: EvalModelConfig,
 ) -> pd.DataFrame:
-    exp_dir = exp_paths.exp_dir / f"split_{model_split_id}"
-    state_dict = torch.load(exp_dir / "weights.pt")
+    state_dict = torch.load(ckpt_dir / "weights.pt")
     model.load_state_dict(state_dict)
-    datamodule = build_datamodule(cfg, target_split_id)
+    datamodule = build_datamodule(cfg)
 
     trainer = instantiate(cfg.trainer)
-    test_writer = TestPredictionWriter(exp_dir.parent.parent)
+    test_writer = TestPredictionWriter(result_dir)
     trainer.callbacks.append(test_writer)
 
     trainer.test(model, datamodule)
@@ -125,26 +134,41 @@ def get_scores(
 
 
 def run_trainer(cfg: EvalModelConfig):
+    dataset_type = HydraConfig.get().runtime.choices.dataset
     exp_paths = cfg.exp_paths
     validate_paths(exp_paths, cfg)
+
+    split_id = cfg.dataset.split_id
+    split_dir = "" if split_id is None else f"split_{split_id}"
     model = instantiate(cfg.model)
 
-    result_file = exp_paths.exp_dir.parent / "results"
-    results = []
+    match dataset_type:
+        case "single":
+            results = []
+            result_dir = exp_paths.exp_dir.parent / "results"
 
-    if cfg.split_id is not None:
-        result_df = get_scores(model, cfg.split_id, None, exp_paths, cfg)
-        results.append(result_df)
+            for i in range(10):
+                cfg.dataset.split_id = i
+                ckpt_dir = exp_paths.exp_dir / f"split_{i}"
+                result_df = get_scores(model, ckpt_dir, result_dir, cfg)
+                results.append(result_df)
 
-    else:
-        for split_id in range(10):
-            result_df = get_scores(model, split_id, split_id, exp_paths, cfg)
-            results.append(result_df)
+            result_df = pd.concat(results, axis=0, ignore_index=True)
+            result_file = result_dir / f"{exp_paths.exp_dir.name}.csv"
 
-    result_df = pd.concat(results, axis=0, ignore_index=True)
-    sample = f"{cfg.samples[0].name}_" if len(cfg.samples) == 1 else ""
-    split_id = f"_{cfg.split_id}" if cfg.split_id is not None else ""
-    result_file /= f"{sample}results{split_id}.csv"
+        case "multi":
+            ckpt_dir = exp_paths.exp_dir / split_dir
+            result_dir = exp_paths.exp_dir / "results" / split_dir
+            result_df = get_scores(model, ckpt_dir, result_dir, cfg)
+
+            test_samples = sorted([s.name for s in cfg.dataset.test_samples])
+            result_file = result_dir / f"{'_'.join(test_samples)}.csv"
+
+        case "loo" | "fractional":
+            ckpt_dir = exp_paths.exp_dir / split_dir
+            result_dir = exp_paths.exp_dir.parent / "results" / split_dir
+            result_df = get_scores(model, ckpt_dir, result_dir, cfg)
+            result_file = result_dir / f"{exp_paths.exp_dir.name}.csv"
 
     result_df.to_csv(result_file, index=False)
     print(result_df.describe())
