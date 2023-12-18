@@ -2,7 +2,7 @@ label_key: mito
 
 exp_paths:
   cryovit_root: /sdf/home/s/sanketg/projects/CryoVIT
-  exp_dir: ${.cryovit_root}/experiments
+  exp_dir: ${.cryovit_root}/experiments/${exp_name}
   tomo_dir: ${.cryovit_root}/cryovit_dataset/dino_features
   split_file: ${.cryovit_root}/cryovit_dataset/csv/splits.csv
 
@@ -10,6 +10,7 @@ exp_paths:
 
 defaults:
   - model: ???
+  - dataset: ???
   - trainer: trainer_eval
   - eval_model_config
   - _self_
@@ -18,8 +19,6 @@ defaults:
 
 hydra:
   mode: MULTIRUN
-  # sweeper:
-  #   params:
   sweep:
     dir: /tmp/${oc.env:USER}/multirun
 
