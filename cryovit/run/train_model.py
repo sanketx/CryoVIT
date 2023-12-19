@@ -35,8 +35,7 @@ def set_wandb_config(cfg: TrainModelConfig):
 
     for logger in cfg.trainer.logger:
         if logger._target_.split(".")[-1] == "WandbLogger":
-            with open_dict(logger):
-                logger.config.update(config)
+            logger.config.update(config)
 
 
 def setup_params(exp_paths: ExpPaths, cfg: TrainModelConfig):
