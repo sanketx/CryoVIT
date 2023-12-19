@@ -96,6 +96,12 @@ def run_trainer(cfg: TrainModelConfig):
     trainer = instantiate(cfg.trainer)
     model = instantiate(cfg.model)
 
-    trainer.fit(model, datamodule)
+    trainer.fit(
+        model,
+        train_dataloaders=datamodule.train_dataloader(),
+        val_dataloaders=datamodule.test_dataloader(),
+    )
+
     torch.save(model.state_dict(), (exp_paths.exp_dir / "weights.pt"))
-    wandb.finish()
+    torch.cuda.empty_cache()
+    wandb.finish(quiet=True)
