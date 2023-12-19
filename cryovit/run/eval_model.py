@@ -3,7 +3,6 @@ import os
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
-from typing import Optional
 
 import h5py
 import pandas as pd
@@ -18,7 +17,6 @@ from pytorch_lightning.utilities.types import STEP_OUTPUT
 
 from cryovit.config import EvalModelConfig
 from cryovit.config import ExpPaths
-from cryovit.data_modules import MultiSampleDataModule
 
 from ..models.base_model import BaseModel
 

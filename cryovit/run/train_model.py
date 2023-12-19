@@ -5,7 +5,6 @@ import torch
 import wandb
 from hydra.core.hydra_config import HydraConfig
 from hydra.utils import instantiate
-from omegaconf import open_dict
 from pytorch_lightning import LightningDataModule
 from pytorch_lightning import seed_everything
 
