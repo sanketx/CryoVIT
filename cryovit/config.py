@@ -74,7 +74,6 @@ class TrainerFit(Trainer):
 
     log_every_n_steps: int = 1
     num_sanity_val_steps: int = 0
-    deterministic: bool = True
 
 
 @dataclass
