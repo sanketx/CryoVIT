@@ -7,12 +7,14 @@ from hydra.core.hydra_config import HydraConfig
 from hydra.utils import instantiate
 from omegaconf import open_dict
 from pytorch_lightning import LightningDataModule
+from pytorch_lightning import seed_everything
 
 from cryovit.config import ExpPaths
 from cryovit.config import Sample
 from cryovit.config import TrainModelConfig
 
 
+seed_everything(42, workers=True)
 torch.set_float32_matmul_precision("high")
 logging.getLogger("torch._dynamo").setLevel(logging.WARNING)
 logging.getLogger("torch._inductor").setLevel(logging.WARNING)
