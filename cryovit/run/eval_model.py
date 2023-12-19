@@ -17,8 +17,7 @@ from pytorch_lightning.utilities.types import STEP_OUTPUT
 
 from cryovit.config import EvalModelConfig
 from cryovit.config import ExpPaths
-
-from ..models.base_model import BaseModel
+from cryovit.models.base_model import BaseModel
 
 
 torch.set_float32_matmul_precision("high")
