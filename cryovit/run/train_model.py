@@ -23,7 +23,7 @@ def set_wandb_config(cfg: TrainModelConfig):
     if isinstance(cfg.dataset.sample, Sample):
         sample = cfg.dataset.sample.name
     else:
-        sample = [s.name for s in cfg.dataset.sample]
+        sample = "_".join(sorted([s.name for s in cfg.dataset.sample]))
 
     config = {
         "model": cfg.model._target_.split(".")[-1],
