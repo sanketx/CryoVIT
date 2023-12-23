@@ -95,6 +95,7 @@ def run_trainer(cfg: TrainModelConfig):
     datamodule = build_datamodule(cfg)
     trainer = instantiate(cfg.trainer)
     model = instantiate(cfg.model)
+    model.forward = torch.compile(model.forward)
 
     trainer.fit(
         model,
