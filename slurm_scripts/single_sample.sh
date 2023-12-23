@@ -33,7 +33,7 @@ for sample in "${samples[@]}"; do
         done
 
         exp_cmd="$(dirname "$0")/single_sample_job.sh $sample $split_id $1 $2"
-        job_name="single_sample_${sample}_${split_id}"
+        job_name="single_sample_${sample}_${split_id}_${1}_${2}"
         out_dir="$(dirname "$0")/outputs"
 
         sbatch \
