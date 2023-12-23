@@ -14,12 +14,7 @@ class BaseModel(LightningModule):
         super(BaseModel, self).__init__()
         self.lr = lr
         self.weight_decay = weight_decay
-        self._compile(losses, metrics)
 
-    def forward(self):
-        raise NotImplementedError
-
-    def _compile(self, losses, metrics):
         self.loss_fns = {
             "TRAIN": [deepcopy(fn) for fn in losses],
             "VAL": [deepcopy(fn) for fn in losses],
@@ -32,6 +27,9 @@ class BaseModel(LightningModule):
                 "TEST": nn.ModuleList([deepcopy(fn) for fn in metrics]),
             }
         )
+
+    def forward(self):
+        raise NotImplementedError
 
     def configure_optimizers(self):
         return torch.optim.AdamW(
