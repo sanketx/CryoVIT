@@ -1,19 +1,19 @@
-import os
+"""Dataset class for loading DINOv2 features for CryoVIT models."""
+
 from pathlib import Path
+from typing import Any
+from typing import Dict
 from typing import List
 
 import h5py
 import numpy as np
 import pandas as pd
-import torch
-import torch.nn.functional as F
-from numpy.typing import NDArray
 from torch.utils.data import Dataset
-
-from .. import config
 
 
 class TomoDataset(Dataset):
+    """A dataset class for handling and preprocessing tomographic data for CryoVIT models."""
+
     def __init__(
         self,
         records: pd.DataFrame,
@@ -23,6 +23,16 @@ class TomoDataset(Dataset):
         train: bool = False,
         aux_keys: List[str] = [],
     ) -> None:
+        """Creates a new TomoDataset object.
+
+        Args:
+            records (pd.DataFrame): A DataFrame containing records of tomograms.
+            input_key (str): The key in the HDF5 file to access input features.
+            label_key (str): The key in the HDF5 file to access labels.
+            data_root (Path): The root directory where the tomograms are stored.
+            train (bool): Flag to determine if the dataset is for training (enables transformations).
+            aux_keys (List[str]): Additional keys for auxiliary data to load from the HDF5 files.
+        """
         self.records = records
         self.input_key = input_key
         self.label_key = label_key
@@ -31,9 +41,21 @@ class TomoDataset(Dataset):
         self.train = train
 
     def __len__(self) -> int:
+        """Returns the total number of tomograms in the dataset."""
         return len(self.records)
 
-    def __getitem__(self, idx) -> torch.Tensor:
+    def __getitem__(self, idx) -> Dict[str, Any]:
+        """Retrieves a single item from the dataset.
+
+        Args:
+            idx (int): The index of the item.
+
+        Returns:
+            record (Dict[str, Any]): A dictionary containing the loaded data and labels.
+
+        Raises:
+            IndexError: If index is out of the range of the dataset.
+        """
         if idx >= len(self):
             raise IndexError
 
@@ -45,7 +67,15 @@ class TomoDataset(Dataset):
 
         return record
 
-    def _load_tomogram(self, record: str) -> NDArray[np.uint8]:
+    def _load_tomogram(self, record: str) -> Dict[str, Any]:
+        """Loads a single tomogram based on the record information.
+
+        Args:
+            record (pd.Series): A series containing the sample and tomogram names.
+
+        Returns:
+            data (Dict[str, Any]): A dictionary with input data, label, and any auxiliary data.
+        """
         tomo_path = self.data_root / record["sample"] / record["tomo_name"]
         data = {"sample": record["sample"], "tomo_name": record["tomo_name"]}
 
@@ -56,7 +86,12 @@ class TomoDataset(Dataset):
 
         return data
 
-    def _random_crop(self, record):
+    def _random_crop(self, record) -> None:
+        """Applies a random crop to the input data in the record dictionary.
+
+        Args:
+            record (Dict[str, Any]): The record dictionary containing 'input' and 'label' data.
+        """
         max_depth = 128
         side = 32 if self.input_key == "dino_features" else 512
         d, h, w = record["input"].shape[-3:]
@@ -79,26 +114,3 @@ class TomoDataset(Dataset):
             hi, wi, y, z = 16 * np.array([hi, wi, y, z])
 
         record["label"] = record["label"][di : di + x, hi : hi + y, wi : wi + z]
-
-
-if __name__ == "__main__":
-    split_file = os.path.join(config.EXP_DIR, "splits.csv")
-
-    records = pd.read_csv(split_file)
-    records = records[records["sample"] == "Q53_KD"]
-
-    dataset = TomoDataset(
-        records,
-        input_key="dino_features",
-        label_key="mito",
-        aux_keys=["data"],
-        data_root=Path(
-            "/sdf/home/s/sanketg/projects/CryoVIT/cryovit_dataset/dino_features"
-        ),
-        train=True,
-    )
-
-    print(dataset[0].keys())
-
-    for x in dataset:
-        print(x["input"].shape, x["label"].shape)
