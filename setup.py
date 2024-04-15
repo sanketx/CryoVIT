@@ -1,11 +1,12 @@
-from setuptools import find_packages
+"""Setup script for CryoVIT."""
+
 from setuptools import setup
 
 
 setup(
     name="cryovit",
-    version="0.1.0",  # Replace with your package's version
-    author="Sanket Gupte",  # Replace with your name
-    author_email="sanketg@stanford.edu",  # Replace with your email
+    version="0.1.0",
+    author="Sanket Rajan Gupte",
+    author_email="sanketg@stanford.edu",
     packages=["cryovit"],  # Only the cryovit directory is specified as a package
 )
