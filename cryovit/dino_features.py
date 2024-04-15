@@ -16,6 +16,17 @@ warnings.simplefilter("ignore")
 
 
 def validate_config(cfg: DinoFeaturesConfig) -> None:
+    """Validates the configuration for DINOv2 feature extraction.
+
+    Checks if all necessary parameters are present in the configuration. If any required parameters are
+    missing, it logs an error message and exits the script.
+
+    Args:
+        cfg (DinoFeaturesConfig): The configuration object containing settings for feature extraction.
+
+    Raises:
+        SystemExit: If any configuration parameters are missing.
+    """
     missing_keys = OmegaConf.missing_keys(cfg)
     error_msg = ["The following parameters were missing from dino_features.yaml"]
 
@@ -35,6 +46,17 @@ def validate_config(cfg: DinoFeaturesConfig) -> None:
     version_base="1.2",
 )
 def main(cfg: DinoFeaturesConfig) -> None:
+    """Main function to process DINOv2 feature extraction.
+
+    Validates the configuration and processes the sample as per the specified settings. Errors during
+    processing are caught and logged.
+
+    Args:
+        cfg (DinoFeaturesConfig): Configuration object loaded from dino_features.yaml.
+
+    Raises:
+        BaseException: Captures and logs any exceptions that occur during the processing of the sample.
+    """
     validate_config(cfg)
 
     try:
