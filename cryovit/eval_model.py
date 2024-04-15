@@ -3,7 +3,6 @@
 import logging
 import sys
 import warnings
-from typing import Any
 
 import hydra
 from omegaconf import OmegaConf
