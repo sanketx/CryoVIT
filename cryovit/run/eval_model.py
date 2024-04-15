@@ -29,11 +29,7 @@ logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
 
 
 class TestPredictionWriter(Callback):
-    """Callback to write test predictions to disk during model evaluation.
-
-    Args:
-        results_dir (Path): Directory path to store the evaluation results.
-    """
+    """Callback to write test predictions to disk during model evaluation."""
 
     def __init__(self, results_dir: Path) -> None:
         """Creates a callback to save predictions on the test data.
