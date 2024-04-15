@@ -1,3 +1,5 @@
+"""Script for evaluating CryoVIT models based on configuration files."""
+
 import logging
 import os
 from collections import defaultdict
@@ -27,11 +29,27 @@ logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
 
 
 class TestPredictionWriter(Callback):
+    """Callback to write test predictions to disk during model evaluation.
+
+    Args:
+        results_dir (Path): Directory path to store the evaluation results.
+    """
+
     def __init__(self, results_dir: Path) -> None:
+        """Creates a callback to save predictions on the test data.
+
+        Args:
+            results_dir (Path): directory in which the predictions should be saved.
+        """
         self.results_dir = results_dir
         self.scores = defaultdict(list)
 
-    def _save_prediction(self, outputs):
+    def _save_prediction(self, outputs) -> None:
+        """Saves predictions to an HDF5 file in the results directory.
+
+        Args:
+            outputs (dict): Dictionary containing outputs from a test batch.
+        """
         tomo_dir = self.results_dir / outputs["sample"]
         os.makedirs(tomo_dir, exist_ok=True)
 
@@ -49,6 +67,16 @@ class TestPredictionWriter(Callback):
         batch_idx: int,
         dataloader_idx: int = 0,
     ) -> None:
+        """Handles the end of a test batch to save outputs and collect scores.
+
+        Args:
+            trainer (Trainer): The PyTorch Lightning Trainer instance.
+            pl_module (LightningModule): The module being tested.
+            outputs (STEP_OUTPUT | None): Outputs from the test batch.
+            batch (Any): The batch of data.
+            batch_idx (int): Index of the current batch.
+            dataloader_idx (int): Index of the dataloader.
+        """
         self._save_prediction(outputs)
 
         for key, value in outputs.items():
@@ -56,10 +84,22 @@ class TestPredictionWriter(Callback):
                 self.scores[key].append(value)
 
     def on_test_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
+        """Converts collected scores into a pandas DataFrame at the end of testing.
+
+        Args:
+            trainer (Trainer): The PyTorch Lightning Trainer instance.
+            pl_module (LightningModule): The module being tested.
+        """
         self.result_df = pd.DataFrame.from_dict(self.scores)
 
 
-def validate_paths(exp_paths: ExpPaths, cfg: EvalModelConfig):
+def validate_paths(exp_paths: ExpPaths, cfg: EvalModelConfig) -> None:
+    """Validates the existence of necessary paths for model evaluation.
+
+    Args:
+        exp_paths (ExpPaths): Configuration of experiment paths.
+        cfg (EvalModelConfig): Evaluation configuration.
+    """
     dataset_type = HydraConfig.get().runtime.choices.dataset
 
     match dataset_type:
@@ -90,6 +130,14 @@ def validate_paths(exp_paths: ExpPaths, cfg: EvalModelConfig):
 
 
 def build_datamodule(cfg: EvalModelConfig) -> LightningDataModule:
+    """Constructs and returns a data module for model evaluation based on configuration settings.
+
+    Args:
+        cfg (EvalModelConfig): Configuration object specifying the dataset and model settings.
+
+    Returns:
+        LightningDataModule: A data module instance configured as specified.
+    """
     model_type = HydraConfig.get().runtime.choices.model
 
     match model_type:
@@ -118,6 +166,17 @@ def get_scores(
     result_dir: Path,
     cfg: EvalModelConfig,
 ) -> pd.DataFrame:
+    """Evaluates the model and returns a DataFrame of scores.
+
+    Args:
+        model (BaseModel): The model to be evaluated.
+        ckpt_dir (Path): Directory containing the model checkpoint.
+        result_dir (Path): Directory where results will be saved.
+        cfg (EvalModelConfig): Evaluation configuration.
+
+    Returns:
+        pd.DataFrame: DataFrame containing the evaluation scores.
+    """
     state_dict = torch.load(ckpt_dir / "weights.pt")
     model.load_state_dict(state_dict)
     datamodule = build_datamodule(cfg)
@@ -130,7 +189,12 @@ def get_scores(
     return test_writer.result_df
 
 
-def run_trainer(cfg: EvalModelConfig):
+def run_trainer(cfg: EvalModelConfig) -> None:
+    """Sets up and executes the model evaluation using the specified configuration.
+
+    Args:
+        cfg (EvalModelConfig): Configuration object containing all settings for the evaluation process.
+    """
     dataset_type = HydraConfig.get().runtime.choices.dataset
     exp_paths = cfg.exp_paths
     validate_paths(exp_paths, cfg)

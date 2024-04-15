@@ -1,3 +1,5 @@
+"""Script for setting up and training CryoVIT models based on configuration files."""
+
 import logging
 import os
 
@@ -19,7 +21,12 @@ logging.getLogger("torch._dynamo").setLevel(logging.WARNING)
 logging.getLogger("torch._inductor").setLevel(logging.WARNING)
 
 
-def set_wandb_config(cfg: TrainModelConfig):
+def set_wandb_config(cfg: TrainModelConfig) -> None:
+    """Sets the W&B logger configuration based on the training parameters.
+
+    Args:
+        cfg (TrainModelConfig): Configuration object containing model and dataset settings.
+    """
     if isinstance(cfg.dataset.sample, Sample):
         sample = cfg.dataset.sample.name
     else:
@@ -37,7 +44,13 @@ def set_wandb_config(cfg: TrainModelConfig):
             logger.config.update(config)
 
 
-def setup_params(exp_paths: ExpPaths, cfg: TrainModelConfig):
+def setup_params(exp_paths: ExpPaths, cfg: TrainModelConfig) -> None:
+    """Configures experiment paths based on the dataset type and experiment settings.
+
+    Args:
+        exp_paths (ExpPaths): Object containing path settings for the experiment.
+        cfg (TrainModelConfig): Configuration object for the training model.
+    """
     dataset_type = HydraConfig.get().runtime.choices.dataset
 
     match dataset_type:
@@ -65,6 +78,14 @@ def setup_params(exp_paths: ExpPaths, cfg: TrainModelConfig):
 
 
 def build_datamodule(cfg: TrainModelConfig) -> LightningDataModule:
+    """Creates a data module for the model based on the configuration.
+
+    Args:
+        cfg (TrainModelConfig): Configuration object specifying the dataset and model settings.
+
+    Returns:
+        LightningDataModule: A data module instance configured as specified.
+    """
     model_type = HydraConfig.get().runtime.choices.model
 
     match model_type:
@@ -87,7 +108,12 @@ def build_datamodule(cfg: TrainModelConfig) -> LightningDataModule:
     )
 
 
-def run_trainer(cfg: TrainModelConfig):
+def run_trainer(cfg: TrainModelConfig) -> None:
+    """Sets up and runs the training process using the specified configuration.
+
+    Args:
+        cfg (TrainModelConfig): Configuration object containing all settings for the training process.
+    """
     exp_paths = cfg.exp_paths
     setup_params(exp_paths, cfg)
     set_wandb_config(cfg)
