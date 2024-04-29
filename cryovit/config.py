@@ -13,22 +13,24 @@ from hydra.core.config_store import ConfigStore
 from omegaconf import MISSING
 
 
-samples = [
-    "BACHD",
-    "dN17_BACHD",
-    "Q109",
-    "Q18",
-    "Q20",
-    "Q53",
-    "Q53_KD",
-    "Q66",
-    "Q66_GRFS1",
-    "Q66_KD",
-    "WT",
-    "cancer",
-]
+class Sample(Enum):
+    """Enum of all valid CryoET Samples."""
 
-Sample = Enum("Sample", samples)
+    BACHD = "BACHD"
+    dN17_BACHD = "dN17 BACHD"
+    Q109 = "Q109"
+    Q18 = "Q18"
+    Q20 = "Q20"
+    Q53 = "Q53"
+    Q53_KD = "Q53 PIAS1"
+    Q66 = "Q66"
+    Q66_GRFS1 = "Q66 GRFS1"
+    Q66_KD = "Q66 PIAS1"
+    WT = "WT"
+    cancer = "Cancer"
+
+
+samples = [sample.name for sample in Sample]
 
 
 @dataclass
