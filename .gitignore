@@ -4,7 +4,9 @@ experiments/*
 cryovit_dataset/*
 slurm_scripts/outputs/*
 wandb/
+
 cryovit/data_proc/*
+cryovit/eval/images/*
 
 .vscode
 
