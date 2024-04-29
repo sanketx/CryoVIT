@@ -98,7 +98,7 @@ def plot_df(df: pd.DataFrame, pvalues: pd.Series, title: str, ax: Axes):
         df (pd.DataFrame): DataFrame containing the data to plot.
         pvalues (pd.Series): Series containing p-values for annotations.
         title (str): The title of the plot.
-        file_name (str): Base file name for saving the plot images.
+        ax (Axes): Axes object for plotting the figure.
     """
     sample_counts = df["Sample"].value_counts()
     sorted_samples = sample_counts.sort_values(ascending=True).index.tolist()
