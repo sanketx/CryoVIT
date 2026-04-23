@@ -1,6 +1,8 @@
 name: ${hydra:runtime.choices.datamodule}_any_${hydra:runtime.choices.model}_${label_key}
 label_key: ???
 random_seed: 42
+additional_keys:
+  - data
 
 #################### Do not modify #####################
 
