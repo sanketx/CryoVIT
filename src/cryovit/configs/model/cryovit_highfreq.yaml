@@ -1,0 +1,11 @@
+_target_: cryovit.models.CryoVIT_HF
+lr: 1e-4
+input_key: dino_features
+
+name: CryoVIT_HF
+
+#### DO NOT CHANGE ####
+
+defaults:
+  - default
+  - _self_
