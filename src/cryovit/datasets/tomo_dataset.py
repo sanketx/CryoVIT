@@ -176,3 +176,6 @@ class TomoDataset(Dataset):
             hi, wi, y, z = 16 * np.array([hi, wi, y, z])
 
         data["label"] = data["label"][di : di + x, hi : hi + y, wi : wi + z]
+
+        for key in self.aux_keys:
+            data[key] = data[key][..., di : di + x, hi : hi + y, wi : wi + z]
