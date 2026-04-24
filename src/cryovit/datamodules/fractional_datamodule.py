@@ -36,6 +36,9 @@ class FractionalDataModule(BaseDataModule):
             test_sample, int
         ), f"Fractional sample 'test_sample' should be an integer. Got {test_sample} instead."
 
+        # we only want to generate splits for the relevant samples
+        self.record_df = self.record_df[self.record_df["sample"].isin(sample)]
+
         # Add new splits for fractional training
         num_samples = self.record_df.shape[0]
         n_splits = 11  # Using 10-fold + 1 for LOO
@@ -73,7 +76,6 @@ class FractionalDataModule(BaseDataModule):
 
         return self.record_df[
             (self.record_df[self.split_key].isin(training_splits))
-            & (self.record_df["sample"].isin(self.sample))
         ][["sample", "tomo_name"]]
 
     def val_df(self) -> pd.DataFrame:
@@ -84,10 +86,7 @@ class FractionalDataModule(BaseDataModule):
         """
 
         assert self.record_df is not None
-        return self.record_df[
-            (self.record_df[self.split_key] == self.test_id)
-            & (self.record_df["sample"].isin(self.sample))
-        ]
+        return self.record_df[(self.record_df[self.split_key] == self.test_id)]
 
     def test_df(self) -> pd.DataFrame:
         """Test tomograms: test on tomograms from the held out sample.
@@ -116,6 +115,4 @@ class FractionalDataModule(BaseDataModule):
         """
 
         assert self.record_df is not None
-        return self.record_df[self.record_df["sample"].isin(self.sample)][
-            ["sample", "tomo_name"]
-        ]
+        return self.record_df[["sample", "tomo_name"]]
