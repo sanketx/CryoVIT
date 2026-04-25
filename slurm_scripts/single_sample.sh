@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Check if four arguments are provided
-if [ "$#" -ne 4 ]; then
-    echo "Usage: $0 sample group (ad, hd, rgc, algae, campy) model (cryovit, unet3d, sam2, or medsam) label_key (mito, microtubule, cristae, granule, dense_mito) wandb_api_key"
+if [ "$#" -ne 3 ]; then
+    echo "Usage: $0 sample group (ad, hd, rgc, algae, campy) model (cryovit, cryovit_highfreq, unet3d, sam2, or medsam) label_key (mito, microtubule, cristae, granule, dense_mito)"
     exit 1
 fi
 
@@ -123,7 +123,7 @@ for sample in "${samples[@]}"; do
             sleep 10  # Wait for 10 seconds before checking again
         done
 
-        exp_cmd="$(dirname "$0")/single_sample_job.sh $sample $split_id $1 $2 $3 $4"
+        exp_cmd="$(dirname "$0")/single_sample_job.sh $sample $split_id $1 $2 $3"
         job_name="single_sample_${2}_${3}_${sample}_${split_id}"
         out_dir="$(dirname "$0")/outputs"
 
@@ -134,9 +134,9 @@ for sample in "${samples[@]}"; do
             --output="${out_dir}/${job_name}.out" \
             --ntasks=1 \
             --cpus-per-task=8 \
-            --mem-per-cpu=6gb \
+            --mem-per-cpu=8gb \
             --gres=gpu:a100:1 \
-            --time=00:30:00 \
+            --time=01:00:00 \
             --wrap="$exp_cmd"
 
         ((current_job++))
